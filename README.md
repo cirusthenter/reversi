@@ -27,7 +27,7 @@ Player 2: ○
 ---------------------
 
 ```
-If you are Player 1 and want to put the ● to an apropreate place, let's say right above the upper right ○, you need to input "4c" or "c4" and the board will changes this way.
+If you are Player 1 and want to put the ● to an apropreate place, let's say right above the upper right ○, you need to input "4c" or "c4" and the board changes this way.
 
 ```
 ---------------------
