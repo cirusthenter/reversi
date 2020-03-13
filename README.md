@@ -26,7 +26,6 @@ Player 1: ●
 Player 2: ○
 ---------------------
 ```
-
 If you are Player 1 and want to put the white stone to an apropreate place, you need to input, for example, "4c" or "c4" and the board will changes like this.
 
 ```
