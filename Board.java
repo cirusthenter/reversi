@@ -1,5 +1,5 @@
 public class Board {
-    static final int FIELDSIZE = 8;
+    static final int FIELDSIZE = 30;
     private int[][] field = new int[FIELDSIZE][FIELDSIZE];
     int occupied = 4;
 
