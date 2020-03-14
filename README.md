@@ -103,7 +103,7 @@ Player 1: ●
 Player 2: ○
 ---------------------
 ```
-However, you might feel tiny in some case. Then you want to set `FIELDSIZE` to a small number, such as 4.
+However, you might feel tiny some rainy day.  Then you want to set `FIELDSIZE` to a small number, such as 4.
 
 ```
 ---------------------
