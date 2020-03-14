@@ -118,7 +118,7 @@ Player 2: ○
 ---------------------
 ```
 
-The size of the board can be however big you want it to be, but keep in mind, the character is interpreted as ASCII code, thus if you set the size bigger than 26, say 30, you get it printed a weired way. Just don't care.
+The size of the board can be however big you want it to be, but keep in mind, the character is interpreted as ASCII code, thus if you set the size bigger than 26, say 30, you get it printed a weired way. But just don't care.
 
 ```
 ---------------------
