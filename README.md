@@ -30,7 +30,7 @@ Player 2: ○
 ---------------------
 
 ```
-If you are Player 1 and want to put the ● to an apropreate place, let's say right above the upper right ○, you need to input "4c" or "c4" and the board changes this way.
+If you are Player 1 and want to put the ● to an appropriate place, let's say right above the upper right ○, you need to input "4c" or "c4" and the board changes this way.
 
 ```
 ---------------------
@@ -64,16 +64,29 @@ Player 2: ○
 ---------------------
 ```
 
+## Rules
+- Player 1 (●) moves first. A move must flip at least one opponent stone.
+- A player with no legal move passes automatically.
+- The game ends when the board is full or neither player can move; the player with more stones wins.
+
+## Tests
+A dependency-free test runner is included:
+
+```
+$ javac Board.java BoardTest.java
+$ java BoardTest
+```
+
 ## TIPS
 If you feel grandeur, you may like editing line 2 in `Board.java`.
 
 ```
-1: public calss Board {
-2:	  static final int FIELDSIZE = 8;
-3:    private int[][] field = new int[FIELDSIZE][FIELDSIZE];
+1: public class Board {
+2:     static final int FIELDSIZE = 8;
+3:     static final int PLAYER1 = 1;   // ●
 ```
 
-The constant `FIELDSIZE` defines the size of the board. In the default mode, where `FIELDSIZE` is 8, you get the 8 * 8 battle field. If it is changed to 20, you get the following grand filed:
+The constant `FIELDSIZE` defines the size of the board. In the default mode, where `FIELDSIZE` is 8, you get the 8 * 8 battle field. If it is changed to 20, you get the following grand field:
 
 ```
 ---------------------
@@ -118,7 +131,7 @@ Player 2: ○
 ---------------------
 ```
 
-The size of the board can be however big you want it to be, but keep in mind, the character is interpreted as an ASCII code char, thus if you set the size bigger than 26, say 30, you get it printed a weired way. But just don't care and type like "25}".
+The size of the board can be however big you want it to be, but keep in mind, the character is interpreted as an ASCII code char, thus if you set the size bigger than 26, say 30, you get it printed a weird way. But just don't care and type like "25}".
 
 ```
 ---------------------
