@@ -1,537 +1,160 @@
 public class Board {
-    static final int FIELDSIZE = 30;
-    private int[][] field = new int[FIELDSIZE][FIELDSIZE];
+    static final int FIELDSIZE = 8;
+    static final int PLAYER1 = 1;   // ●
+    static final int PLAYER2 = -1;  // ○
+
+    private static final int[][] DIRECTIONS = {
+        {-1, -1}, {-1, 0}, {-1, 1},
+        { 0, -1},          { 0, 1},
+        { 1, -1}, { 1, 0}, { 1, 1}
+    };
+
+    private final int[][] field = new int[FIELDSIZE][FIELDSIZE];
     int occupied = 4;
 
     public Board() {
-        for (int i = 0; i < FIELDSIZE; i++) {
-            for (int j = 0; j < FIELDSIZE; j++) {
-                field[i][j] = 0;
-            }
-        }
-        field[FIELDSIZE/2 - 1][FIELDSIZE/2 - 1] = 1;
-        field[FIELDSIZE/2][FIELDSIZE/2 - 1] = -1;
-        field[FIELDSIZE/2 - 1][FIELDSIZE/2] = -1;
-        field[FIELDSIZE/2][FIELDSIZE/2] = 1;
+        int mid = FIELDSIZE / 2;
+        field[mid - 1][mid - 1] = PLAYER1;
+        field[mid][mid - 1] = PLAYER2;
+        field[mid - 1][mid] = PLAYER2;
+        field[mid][mid] = PLAYER1;
     }
 
-    public void printBoard(){
-        char letter = 'a';
-        System.out.println("---------------------");
-        System.out.print("|   ");
-        for (int i = 0; i < FIELDSIZE - 1; i++){
-            System.out.print(i + " ");
+    private static char symbol(int cell) {
+        return cell == PLAYER1 ? '●' : cell == PLAYER2 ? '○' : '_';
+    }
+
+    public void printBoard() {
+        String line = "-".repeat(FIELDSIZE * 2 + 5);
+        System.out.println(line);
+        StringBuilder header = new StringBuilder("|   ");
+        for (int j = 0; j < FIELDSIZE; j++) {
+            header.append(j).append(' ');
         }
-        System.out.println(FIELDSIZE - 1 + " |");
-        for (int i = 0; i < FIELDSIZE; i++, letter++) {
-            System.out.print("| " + letter + " ");
-            for (int j = 0; j < FIELDSIZE - 1; j++){
-                if (field[i][j] == 1) {
-                    System.out.print("● ");
-                } else if (field[i][j] == -1) {
-                    System.out.print("○ ");
-                } else {
-                    System.out.print("_ ");
-                }
+        System.out.println(header.append('|'));
+        for (int i = 0; i < FIELDSIZE; i++) {
+            StringBuilder row = new StringBuilder("| ").append((char) ('a' + i)).append(' ');
+            for (int j = 0; j < FIELDSIZE; j++) {
+                row.append(symbol(field[i][j])).append(' ');
             }
-            if (field[i][FIELDSIZE - 1] == 1) {
-                System.out.println("● |");
-            } else if (field[i][FIELDSIZE - 1] == -1) {
-                System.out.println("○ |");
-            } else {
-                System.out.println("_ |");
-            }
+            System.out.println(row.append('|'));
         }
-        System.out.println("---------------------");
+        System.out.println(line);
         System.out.println("Player 1: ●");
         System.out.println("Player 2: ○");
-        System.out.println("---------------------");
+        System.out.println(line);
     }
 
-    public int setBoard(int player, String input){
-        System.out.print("Player ");
-        if (player == 1) {
-            System.out.print(1 + " ● ");
-        } else {
-            System.out.print(2 + " ○ ");
+    private static boolean inside(int i, int j) {
+        return 0 <= i && i < FIELDSIZE && 0 <= j && j < FIELDSIZE;
+    }
+
+    /** Number of stones the player would flip in one direction from (i, j); 0 if none. */
+    private int countFlips(int i, int j, int di, int dj, int player) {
+        int n = 0;
+        i += di;
+        j += dj;
+        while (inside(i, j) && field[i][j] == -player) {
+            n++;
+            i += di;
+            j += dj;
         }
-        System.out.println("input: " + input);
+        return (inside(i, j) && field[i][j] == player) ? n : 0;
+    }
+
+    /** True if the player may place a stone at (i, j). */
+    public boolean isValidMove(int i, int j, int player) {
+        if (!inside(i, j) || field[i][j] != 0) {
+            return false;
+        }
+        for (int[] d : DIRECTIONS) {
+            if (countFlips(i, j, d[0], d[1], player) > 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** True if the player has at least one legal move. */
+    public boolean hasMove(int player) {
+        for (int i = 0; i < FIELDSIZE; i++) {
+            for (int j = 0; j < FIELDSIZE; j++) {
+                if (isValidMove(i, j, player)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isFull() {
+        return occupied >= FIELDSIZE * FIELDSIZE;
+    }
+
+    /** The game is over when the board is full or neither player can move. */
+    public boolean isGameOver() {
+        return isFull() || (!hasMove(PLAYER1) && !hasMove(PLAYER2));
+    }
+
+    /**
+     * Parses input such as "4c" or "c4" (row letter + column digit, either order).
+     * Returns {row, col} or null if the format is invalid.
+     */
+    static int[] parse(String input) {
+        if (input == null) {
+            return null;
+        }
+        input = input.trim().toLowerCase();
         if (input.length() != 2) {
-            return 1;
+            return null;
         }
-        int i = Integer.valueOf(input.charAt(0)) - 'a';
-        int j = Integer.valueOf(input.charAt(1)) - '0';
-        if (0 <= i && i < FIELDSIZE && 0 <= j && j < FIELDSIZE) {
+        char a = input.charAt(0);
+        char b = input.charAt(1);
+        int i, j;
+        if (Character.isLetter(a)) {
+            i = a - 'a';
+            j = b - '0';
         } else {
-            i = Integer.valueOf(input.charAt(1)) - 'a';
-            j = Integer.valueOf(input.charAt(0)) - '0';
-            if (0 <= i && i < FIELDSIZE && 0 <= j && j < FIELDSIZE) {
-            } else {
-                return 1;
+            i = b - 'a';
+            j = a - '0';
+        }
+        return inside(i, j) ? new int[] {i, j} : null;
+    }
+
+    /** Tries to play the move; returns true on success, false if the input is invalid. */
+    public boolean setBoard(int player, String input) {
+        int[] pos = parse(input);
+        if (pos == null || !isValidMove(pos[0], pos[1], player)) {
+            return false;
+        }
+        for (int[] d : DIRECTIONS) {
+            int n = countFlips(pos[0], pos[1], d[0], d[1], player);
+            for (int k = 1; k <= n; k++) {
+                field[pos[0] + d[0] * k][pos[1] + d[1] * k] = player;
             }
         }
-        if (field[i][j] != 0) {
-            return 1;
-        }
-        if (seeAroundBoard(i, j, player) == 0) {
-            return 1;
-        }
-        field[i][j] = player;
+        field[pos[0]][pos[1]] = player;
         occupied++;
-        return 0;
+        return true;
     }
 
-    public int seeAroundBoard(int i, int j, int player) {
-        int valid = 0;
-        if (0 < i) {
-            if (0 < j){
-                if (field[i - 1][j - 1] * player == -1) {
-                    if (reverseBoard(i - 1, j - 1, 1, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-            if (field[i - 1][j] * player == -1) {
-                if (reverseBoard(i - 1, j, 2, player) == 0) {
-                    valid = 1;
-                }
-            }
-            if (j < FIELDSIZE - 1){
-                if (field[i - 1][j + 1] * player == -1) {
-                    if (reverseBoard(i - 1, j + 1, 3, player) == 0) {
-                        valid = 1;
-                    }
+    public int count(int player) {
+        int sum = 0;
+        for (int[] row : field) {
+            for (int cell : row) {
+                if (cell == player) {
+                    sum++;
                 }
             }
         }
-        if (0 < j){
-            if (field[i][j - 1] * player == -1) {
-                if (reverseBoard(i, j - 1, 4, player) == 0) {
-                    valid = 1;
-                }
-            }
-        }
-        if (j < FIELDSIZE - 1){
-            if (field[i][j + 1] * player == -1) {
-                if (reverseBoard(i, j + 1, 6, player) == 0) {
-                    valid = 1;
-                }
-            }
-        }
-        if (i < FIELDSIZE - 1){
-            if (0 < j){
-                if (field[i + 1][j - 1] * player == -1) {
-                    if (reverseBoard(i + 1, j - 1, 7, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-            if (field[i + 1][j] * player == -1) {
-                if (reverseBoard(i + 1, j, 8, player) == 0) {
-                    valid = 1;
-                }
-            }
-            if (j < FIELDSIZE - 1){
-                if (field[i + 1][j + 1] * player == -1) {
-                    if (reverseBoard(i + 1, j + 1, 9, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-        }
-
-        return valid;
+        return sum;
     }
 
-    public int reverseBoard(int i, int j, int direction, int player) {
-        // returns 1 if none can be flipped and 0 otherwise
-        // About variable "direction":
-        // Let's say x == fidle[i][j], then
-        // 1 2 3
-        // 4 x 6
-        // 7 8 9
-        // e.g. if the value we want to check is in the NE,
-        // the "direction" is going to be 3.
-        //
-        if (direction == 1) {
-            if (0 < i && 0 < j) {
-                if (field[i - 1][j - 1] * player == -1) {
-                    int ret_val = reverseBoard(i - 1, j - 1, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i - 1][j - 1] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 2) {
-            if (0 < i) {
-                if (field[i - 1][j] * player == -1) {
-                    int ret_val = reverseBoard(i - 1, j, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i - 1][j] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 3) {
-            if (0 < i && j < FIELDSIZE - 1) {
-                if (field[i - 1][j + 1] * player == -1) {
-                    int ret_val = reverseBoard(i - 1, j + 1, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i - 1][j + 1] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-
-        if (direction == 4) {
-            if (0 < j) {
-                if (field[i][j - 1] * player == -1) {
-                    int ret_val = reverseBoard(i, j - 1, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i][j - 1] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 6) {
-            if (j < FIELDSIZE - 1) {
-                if (field[i][j + 1] * player == -1) {
-                    int ret_val = reverseBoard(i, j + 1, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i][j + 1] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-
-        if (direction == 7) {
-            if (i < FIELDSIZE - 1 && 0 < j) {
-                if (field[i + 1][j - 1] * player == -1) {
-                    int ret_val = reverseBoard(i + 1, j - 1, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i + 1][j - 1] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 8) {
-            if (i < FIELDSIZE - 1) {
-                if (field[i + 1][j] * player == -1) {
-                    int ret_val = reverseBoard(i + 1, j, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i + 1][j] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 9) {
-            if (i < FIELDSIZE - 1 && j < FIELDSIZE - 1) {
-                if (field[i + 1][j + 1] * player == -1) {
-                    int ret_val = reverseBoard(i + 1, j + 1, direction, player);
-                    if (ret_val == 0) {
-                        field[i][j] = player;
-                    }
-                    return ret_val;
-                } else if (field[i + 1][j + 1] * player == 0) {
-                    return 1;
-                } else { //can be flipped!
-                    field[i][j] = player;
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        return 1;
-    }
-
-    public int passCheck(int player) {
-        int valid = 0;
-        int endcheck = 0;
-        int finalcheckbit = 0;
-        int i = 0;
-        int j = 0;
-        for (i = 0; i < FIELDSIZE; i++) {
-            for (j = 0; j < FIELDSIZE; j++) {
-                if (field[i][j] != 0) {
-                    if (finalcheckbit == 1) {
-                        //OK
-                    } else if (endcheck == 0){
-                        endcheck = field[i][j];
-                    } else if (endcheck * field[i][j] == -1){
-                        finalcheckbit = 1;
-                    }
-                    continue;
-                }
-                if (valid == 0){
-                    valid = passCheckSet(i, j, player);
-                }
-            }
-        }
-        if (finalcheckbit == 0){
-            return -1;
-        } else {
-            return valid;
-        }
-    }
-
-    public int passCheckSet(int i, int j, int player) {
-        int valid = 0;
-        if (0 < i) {
-            if (0 < j){
-                if (field[i - 1][j - 1] * player == -1) {
-                    if (passCheckBoard(i - 1, j - 1, 1, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-            if (field[i - 1][j] * player == -1) {
-                if (passCheckBoard(i - 1, j, 2, player) == 0) {
-                    valid = 1;
-                }
-            }
-            if (j < FIELDSIZE - 1){
-                if (field[i - 1][j + 1] * player == -1) {
-                    if (passCheckBoard(i - 1, j + 1, 3, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-        }
-        if (0 < j){
-            if (field[i][j - 1] * player == -1) {
-                if (passCheckBoard(i, j - 1, 4, player) == 0) {
-                    valid = 1;
-                }
-            }
-        }
-        if (j < FIELDSIZE - 1){
-            if (field[i][j + 1] * player == -1) {
-                if (passCheckBoard(i, j + 1, 6, player) == 0) {
-                    valid = 1;
-                }
-            }
-        }
-        if (i < FIELDSIZE - 1){
-            if (0 < j){
-                if (field[i + 1][j - 1] * player == -1) {
-                    if (passCheckBoard(i + 1, j - 1, 7, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-            if (field[i + 1][j] * player == -1) {
-                if (passCheckBoard(i + 1, j, 8, player) == 0) {
-                    valid = 1;
-                }
-            }
-            if (j < FIELDSIZE - 1){
-                if (field[i + 1][j + 1] * player == -1) {
-                    if (passCheckBoard(i + 1, j + 1, 9, player) == 0) {
-                        valid = 1;
-                    }
-                }
-            }
-        }
-
-        return valid;
-    }
-
-    public int passCheckBoard(int i, int j, int direction, int player) {
-        // returns 1 if none can be flipped and 0 otherwise
-        // About variable "direction":
-        // Let's say x == fidle[i][j], then
-        // 1 2 3
-        // 4 x 6
-        // 7 8 9
-        // e.g. if the value we want to check is in the NE,
-        // the "direction" is going to be 3.
-        //
-        if (direction == 1) {
-            if (0 < i && 0 < j) {
-                if (field[i - 1][j - 1] * player == -1) {
-                    return passCheckBoard(i - 1, j - 1, direction, player);
-                } else if (field[i - 1][j - 1] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 2) {
-            if (0 < i) {
-                if (field[i - 1][j] * player == -1) {
-                    return passCheckBoard(i - 1, j, direction, player);
-                } else if (field[i - 1][j] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 3) {
-            if (0 < i && j < FIELDSIZE - 1) {
-                if (field[i - 1][j + 1] * player == -1) {
-                    return passCheckBoard(i - 1, j + 1, direction, player);
-                } else if (field[i - 1][j + 1] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-
-        if (direction == 4) {
-            if (0 < j) {
-                if (field[i][j - 1] * player == -1) {
-                    return passCheckBoard(i, j - 1, direction, player);
-                } else if (field[i][j - 1] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 6) {
-            if (j < FIELDSIZE - 1) {
-                if (field[i][j + 1] * player == -1) {
-                    return passCheckBoard(i, j + 1, direction, player);
-                } else if (field[i][j + 1] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-
-        if (direction == 7) {
-            if (i < FIELDSIZE - 1 && 0 < j) {
-                if (field[i + 1][j - 1] * player == -1) {
-                    return passCheckBoard(i + 1, j - 1, direction, player);
-                } else if (field[i + 1][j - 1] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 8) {
-            if (i < FIELDSIZE - 1) {
-                if (field[i + 1][j] * player == -1) {
-                    return passCheckBoard(i + 1, j, direction, player);
-                } else if (field[i + 1][j] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        if (direction == 9) {
-            if (i < FIELDSIZE - 1 && j < FIELDSIZE - 1) {
-                if (field[i + 1][j + 1] * player == -1) {
-                    return passCheckBoard(i + 1, j + 1, direction, player);
-                } else if (field[i + 1][j + 1] * player == 0) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
-        return 1;
-    }
     public int player1Number() {
-        int sum = 0;
-        for (int i = 0; i < FIELDSIZE; i++) {
-            for (int j = 0; j < FIELDSIZE; j++) {
-                if (field[i][j] == 1) {
-                    sum++;
-                }
-            }
-        }
-        return sum;
+        return count(PLAYER1);
     }
+
     public int player2Number() {
-        int sum = 0;
-        for (int i = 0; i < FIELDSIZE; i++) {
-            for (int j = 0; j < FIELDSIZE; j++) {
-                if (field[i][j] == -1) {
-                    sum++;
-                }
-            }
-        }
-        return sum;
+        return count(PLAYER2);
     }
 }

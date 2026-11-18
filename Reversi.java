@@ -1,44 +1,37 @@
-public class Reversi {
-    public static void main (String[] args) {
-        Board mainboard;
-        String input;
-        mainboard = new Board();
-        mainboard.printBoard();
-        while (mainboard.occupied < mainboard.FIELDSIZE * mainboard.FIELDSIZE){
-            if (mainboard.passCheck(1) == 1) {
-                input = javax.swing.JOptionPane.showInputDialog("Player 1");
-                while (mainboard.setBoard(1, input) == 1) {
-                    input = javax.swing.JOptionPane.showInputDialog("Input \"" + input + "\" is invalid\n Player 1");
-                }
-            } else if (mainboard.passCheck(1) == 0){
-                System.out.println("***************");
-                System.out.println("Player 1 PASSED");
-                System.out.println("***************");
-            } else if (mainboard.passCheck(1) == -1){
-                System.out.println("All ○");
-                break;
-            }
-            mainboard.printBoard();
+import java.util.Scanner;
 
-            if (mainboard.occupied < mainboard.FIELDSIZE * mainboard.FIELDSIZE){
-                if (mainboard.passCheck(-1) == 1) {
-                    input = javax.swing.JOptionPane.showInputDialog("PLayer 2");
-                    while (mainboard.setBoard(-1, input) == 1) {
-                        input = javax.swing.JOptionPane.showInputDialog("Input \"" + input + "\" is invalid\n Player 2");
+public class Reversi {
+    public static void main(String[] args) {
+        Board board = new Board();
+        Scanner in = new Scanner(System.in);
+        board.printBoard();
+        int player = Board.PLAYER1;
+        while (!board.isGameOver()) {
+            int number = player == Board.PLAYER1 ? 1 : 2;
+            char mark = player == Board.PLAYER1 ? '●' : '○';
+            if (!board.hasMove(player)) {
+                System.out.println("***************");
+                System.out.println("Player " + number + " PASSED");
+                System.out.println("***************");
+            } else {
+                while (true) {
+                    System.out.print("Player " + number + " " + mark + " input (e.g. 4c): ");
+                    if (!in.hasNextLine()) {
+                        System.out.println("\nInput closed. Game aborted.");
+                        return;
                     }
-                } else if (mainboard.passCheck(-1) == 0){
-                    System.out.println("***************");
-                    System.out.println("Player 2 PASSED");
-                    System.out.println("***************");
-                } else if (mainboard.passCheck(-1) == -1){
-                    System.out.println("All ●");
-                    break;
+                    String input = in.nextLine();
+                    if (board.setBoard(player, input)) {
+                        break;
+                    }
+                    System.out.println("Input \"" + input + "\" is invalid");
                 }
+                board.printBoard();
             }
-            mainboard.printBoard();
+            player = -player;
         }
-        int p1 = mainboard.player1Number();
-        int p2 = mainboard.player2Number();
+        int p1 = board.player1Number();
+        int p2 = board.player2Number();
         System.out.println("*************************");
         System.out.println("Player 1 ●: " + p1);
         System.out.println("Player 2 ○: " + p2);
@@ -53,5 +46,3 @@ public class Reversi {
         System.out.println("*************************");
     }
 }
-
-
